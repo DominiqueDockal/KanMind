@@ -1,12 +1,23 @@
+from django.db.models import Q
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
-from django.db.models import Q
-from kanban_app.models import Board, Task, TaskComment
-from kanban_app.api.serializers import BoardSerializer, TaskSerializer, TaskCommentSerializer
 from rest_framework.permissions import IsAuthenticated
-from kanban_app.api.permissions import (
-    IsBoardMemberOrOwner, IsTaskBoardMemberOrOwner, IsCommentAuthor, IsBoardOwner, IsTaskCreatorOrBoardOwner
+
+from kanban_app.models import Board, Task, TaskComment
+from kanban_app.api.serializers import (
+    BoardSerializer,
+    TaskSerializer,
+    TaskCommentSerializer,
 )
+from kanban_app.api.permissions import (
+    IsBoardOwner,
+    IsBoardMemberOrOwner,
+    IsTaskBoardMemberOrOwner,
+    IsTaskAssigneeOrReviewer,
+    IsCommentAuthor,
+    IsTaskCreatorOrBoardOwner,
+)
+
 
 class BoardListCreateView(generics.ListCreateAPIView):
     queryset = Board.objects.all()

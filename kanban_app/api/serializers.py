@@ -1,5 +1,5 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 from kanban_app.models import Task, Board, TaskComment
 
 User = get_user_model()

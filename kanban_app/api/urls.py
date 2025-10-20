@@ -1,5 +1,5 @@
 from django.urls import path
-from kanban_app.views import (
+from kanban_app.api.views import (
     BoardListCreateView, BoardDetailView,
     TaskListCreateView, TaskDetailView,
     TaskAssignedToMeListView, TaskReviewingListView,
