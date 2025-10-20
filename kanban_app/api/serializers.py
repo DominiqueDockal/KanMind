@@ -61,7 +61,11 @@ class SimpleTaskSerializer(serializers.ModelSerializer):
         ]
 
 class BoardSerializer(serializers.ModelSerializer):
-    members = BoardMemberSerializer(many=True, read_only=True)
+    # Zusätzliche Serializer-Felder
+    owner_data = UserShortSerializer(source="owner", read_only=True)
+    members_data = UserShortSerializer(source="members", many=True, read_only=True)
+
+    # Bestehende Felder bleiben verwendbar
     owner_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source="owner", write_only=True, required=False)
     member_ids = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True, source="members", write_only=True, required=False)
     tasks = SimpleTaskSerializer(many=True, read_only=True)
@@ -73,12 +77,30 @@ class BoardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = [
-            "id", "title", "members", "owner_id", "member_ids",
-            "tasks", "member_count", "ticket_count",
-            "tasks_to_do_count", "tasks_high_prio_count"
+            "id",
+            "title",
+            "owner_data",
+            "members_data",
+            "owner_id",
+            "member_ids",
+            "members",
+            "tasks",
+            "member_count",
+            "ticket_count",
+            "tasks_to_do_count",
+            "tasks_high_prio_count",
         ]
-        read_only_fields = ["id", "members", "tasks", "member_count",
-                            "ticket_count", "tasks_to_do_count", "tasks_high_prio_count"]
+        read_only_fields = [
+            "id",
+            "owner_data",
+            "members_data",
+            "members",
+            "tasks",
+            "member_count",
+            "ticket_count",
+            "tasks_to_do_count",
+            "tasks_high_prio_count",
+        ]
 
     def get_member_count(self, obj):
         return obj.members.count()
@@ -92,10 +114,14 @@ class BoardSerializer(serializers.ModelSerializer):
     def get_tasks_high_prio_count(self, obj):
         return obj.tasks.filter(priority="high").count()
 
+
 class TaskCommentSerializer(serializers.ModelSerializer):
-    author = serializers.CharField(source="author.get_full_name()", read_only=True)
+    author = serializers.SerializerMethodField()
 
     class Meta:
         model = TaskComment
         fields = ["id", "created_at", "author", "content"]
         read_only_fields = ["id", "created_at", "author"]
+
+    def get_author(self, obj):
+        return obj.author.fullname if obj.author else None

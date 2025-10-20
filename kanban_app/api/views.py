@@ -2,6 +2,7 @@ from django.db.models import Q
 from rest_framework import generics
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import DestroyAPIView
 
 from kanban_app.models import Board, Task, TaskComment
 from kanban_app.api.serializers import (
@@ -27,6 +28,9 @@ class BoardListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
+    
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
@@ -106,10 +110,15 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
             author=self.request.user
         )
 
-class TaskCommentDestroyView(generics.DestroyAPIView):
+class TaskCommentDestroyView(DestroyAPIView):
     serializer_class = TaskCommentSerializer
-    permission_classes = [IsAuthenticated, IsCommentAuthor, IsTaskBoardMemberOrOwner]
+    permission_classes = [IsAuthenticated, IsTaskBoardMemberOrOwner]
 
     def get_queryset(self):
-        return TaskComment.objects.filter(task_id=self.kwargs["task_id"], id=self.kwargs["comment_id"])
+        return TaskComment.objects.filter(task_id=self.kwargs["task_id"])
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        return queryset.get(id=self.kwargs["comment_id"])
+
 

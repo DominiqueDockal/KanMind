@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
 from .serializers import RegistrationSerializer, LoginSerializer
 
 
@@ -44,3 +45,21 @@ class LoginView(APIView):
                 }, status=status.HTTP_200_OK)
             return Response({"detail": "Invalid credentials."}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EmailCheckView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        email = request.query_params.get("email")
+        if not email:
+            return Response({"detail": "Email parameter is required."}, status=400)
+
+        try:
+            user = User.objects.get(email=email)
+            return Response({
+                "id": user.id,
+                "email": user.email,
+                "fullname": user.fullname
+            })
+        except User.DoesNotExist:
+            return Response({"detail": "Email not found."}, status=404)
