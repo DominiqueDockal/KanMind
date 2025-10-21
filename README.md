@@ -61,14 +61,14 @@ kanbanapp/      # Kanban boards, tasks, and comments
 - `GET /api/boards/` - List all boards
 - `POST /api/boards/` - Create new board
 - `GET /api/boards/{id}/` - Get board details
-- `PUT /api/boards/{id}/` - Update board
+- `PATCH /api/boards/{id}/` - Update board
 - `DELETE /api/boards/{id}/` - Delete board
 
 ### Tasks
 - `GET /api/tasks/` - List all tasks
 - `POST /api/tasks/` - Create new task
 - `GET /api/tasks/{id}/` - Get task details
-- `PUT /api/tasks/{id}/` - Update task
+- `PATCH /api/tasks/{id}/` - Update task
 - `DELETE /api/tasks/{id}/` - Delete task
 
 ### Comments

@@ -89,12 +89,17 @@ class BoardDetailSerializer(serializers.ModelSerializer):
         return instance
 
 class SimpleTaskSerializer(serializers.ModelSerializer):
+    comments_count = serializers.SerializerMethodField()
     class Meta:
         model = Task
         fields = [
             "id", "title", "description", "status", "priority",
             "assignee", "reviewer", "due_date", "comments_count"
         ]
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+
 
 class TaskSerializer(serializers.ModelSerializer):
     assignee = UserShortSerializer(read_only=True)
@@ -103,7 +108,8 @@ class TaskSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(), source="assignee", write_only=True, required=False)
     reviewer_id = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), source="reviewer", write_only=True, required=False)
-    comments_count = serializers.IntegerField(read_only=True)
+
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -113,6 +119,11 @@ class TaskSerializer(serializers.ModelSerializer):
             "due_date", "comments_count", "assignee_id", "reviewer_id"
         ]
         read_only_fields = ["id", "comments_count", "assignee", "reviewer"]
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+
 
     def validate_status(self, value):
         if value not in dict(Task.STATUS_CHOICES):
@@ -124,16 +135,24 @@ class TaskSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid priority.")
         return value
 
-    def validate(self, attrs):
-        board = attrs.get("board") or self.instance.board if self.instance else None
-        assignee = attrs.get("assignee")
-        reviewer = attrs.get("reviewer")
-        member_ids = board.members.values_list("id", flat=True) if board else []
-        if assignee and assignee.id not in member_ids:
+    def validate_assignee(self, value):
+        board = self.initial_data.get('board') or getattr(self.instance, 'board', None)
+        if isinstance(board, int):
+            board = Board.objects.get(pk=board)
+        if board and value and value.id not in list(board.members.values_list("id", flat=True)):
             raise serializers.ValidationError("Assignee is not a board member.")
-        if reviewer and reviewer.id not in member_ids:
+        return value
+
+    def validate_reviewer(self, value):
+        board = self.initial_data.get('board') or getattr(self.instance, 'board', None)
+        if isinstance(board, int):
+            board = Board.objects.get(pk=board)
+        if board and value and value.id not in list(board.members.values_list("id", flat=True)):
             raise serializers.ValidationError("Reviewer is not a board member.")
-        return attrs
+        return value
+
+
+
 
 class TaskCommentSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()

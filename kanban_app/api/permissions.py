@@ -27,6 +27,7 @@ class IsCommentAuthor(BasePermission):
         return obj.author == request.user
 
 
+
 class IsTaskCreatorOrBoardOwner(BasePermission):
     def has_object_permission(self, request, view, obj):
         board = obj.board

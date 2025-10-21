@@ -20,8 +20,6 @@ from kanban_app.api.permissions import (
     IsTaskCreatorOrBoardOwner,
 )
 
-# ---------- BOARD-VIEWS ----------
-
 class BoardListCreateView(generics.ListCreateAPIView):
     queryset = Board.objects.all()
     permission_classes = [IsAuthenticated]
@@ -54,7 +52,6 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = self.request.user
         return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
 
-# ---------- TASK-VIEWS bleiben wie bisher ----------
 
 class TaskListCreateView(generics.ListCreateAPIView):
     queryset = Task.objects.all()
@@ -123,11 +120,14 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
 
 class TaskCommentDestroyView(DestroyAPIView):
     serializer_class = TaskCommentSerializer
-    permission_classes = [IsAuthenticated, IsTaskBoardMemberOrOwner]
+    permission_classes = [IsAuthenticated, IsCommentAuthor]
 
     def get_queryset(self):
         return TaskComment.objects.filter(task_id=self.kwargs["task_id"])
 
     def get_object(self):
         queryset = self.get_queryset()
-        return queryset.get(id=self.kwargs["comment_id"])
+        obj = queryset.get(id=self.kwargs["comment_id"])
+        self.check_object_permissions(self.request, obj)  # <- HIER wird geprüft!
+        return obj
+
