@@ -61,18 +61,22 @@ class BoardDetailSerializer(serializers.ModelSerializer):
 
     def get_members(self, obj):
         return UserShortSerializer(obj.members.all(), many=True).data
+    
     def get_tasks(self, obj):
         return SimpleTaskSerializer(obj.tasks.all(), many=True).data
+    
     def get_member_count(self, obj):
         return obj.members.count()
+    
     def get_ticket_count(self, obj):
         return obj.tasks.count()
+    
     def get_tasks_to_do_count(self, obj):
         return obj.tasks.filter(status="to-do").count()
+    
     def get_tasks_high_prio_count(self, obj):
         return obj.tasks.filter(priority="high").count()
 
-    # create/update für PATCH/POST:
     def create(self, validated_data):
         members = self.initial_data.get('members', [])
         board = Board.objects.create(**validated_data)
@@ -90,6 +94,7 @@ class BoardDetailSerializer(serializers.ModelSerializer):
 
 class SimpleTaskSerializer(serializers.ModelSerializer):
     comments_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Task
         fields = [
@@ -99,15 +104,11 @@ class SimpleTaskSerializer(serializers.ModelSerializer):
     def get_comments_count(self, obj):
         return obj.comments.count()
 
-
-
 class TaskSerializer(serializers.ModelSerializer):
     assignee = UserShortSerializer(read_only=True)
     reviewer = UserShortSerializer(read_only=True)
-    assignee_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source="assignee", write_only=True, required=False)
-    reviewer_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source="reviewer", write_only=True, required=False)
+    assignee_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source="assignee", write_only=True, required=False)
+    reviewer_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), source="reviewer", write_only=True, required=False)
 
     comments_count = serializers.SerializerMethodField()
 
@@ -122,8 +123,6 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def get_comments_count(self, obj):
         return obj.comments.count()
-
-
 
     def validate_status(self, value):
         if value not in dict(Task.STATUS_CHOICES):
@@ -150,9 +149,6 @@ class TaskSerializer(serializers.ModelSerializer):
         if board and value and value.id not in list(board.members.values_list("id", flat=True)):
             raise serializers.ValidationError("Reviewer is not a board member.")
         return value
-
-
-
 
 class TaskCommentSerializer(serializers.ModelSerializer):
     author = serializers.SerializerMethodField()

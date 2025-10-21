@@ -15,7 +15,6 @@ from kanban_app.api.permissions import (
     IsBoardOwner,
     IsBoardMemberOrOwner,
     IsTaskBoardMemberOrOwner,
-    IsTaskAssigneeOrReviewer,
     IsCommentAuthor,
     IsTaskCreatorOrBoardOwner,
 )
@@ -38,7 +37,7 @@ class BoardListCreateView(generics.ListCreateAPIView):
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
-    permission_classes = [IsAuthenticated]  # object-level permissions im get_permissions
+    permission_classes = [IsAuthenticated] 
 
     def get_serializer_class(self):
         return BoardDetailSerializer
@@ -68,7 +67,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         board = serializer.validated_data['board']
         if self.request.user != board.owner and self.request.user not in board.members.all():
-            raise PermissionDenied("Du bist kein Mitglied des Boards.")
+            raise PermissionDenied("You are not a board member.")
         serializer.save()
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -112,7 +111,7 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
         task = Task.objects.get(id=self.kwargs["task_id"])
         board = task.board
         if self.request.user != board.owner and self.request.user not in board.members.all():
-            raise PermissionDenied("Du bist kein Mitglied des Boards.")
+            raise PermissionDenied("You are not a board member.")
         serializer.save(
             task=task,
             author=self.request.user
@@ -128,6 +127,6 @@ class TaskCommentDestroyView(DestroyAPIView):
     def get_object(self):
         queryset = self.get_queryset()
         obj = queryset.get(id=self.kwargs["comment_id"])
-        self.check_object_permissions(self.request, obj)  # <- HIER wird geprüft!
+        self.check_object_permissions(self.request, obj)  
         return obj
 
