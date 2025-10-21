@@ -54,7 +54,7 @@ class TaskComment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.author.get_full_name()}: {self.content[:20]}"
+        return f"{self.author.fullname}: {self.content[:20]}"
     
     class Meta:
         verbose_name = "Task Comment"

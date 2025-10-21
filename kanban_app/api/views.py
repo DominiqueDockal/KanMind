@@ -6,7 +6,8 @@ from rest_framework.generics import DestroyAPIView
 
 from kanban_app.models import Board, Task, TaskComment
 from kanban_app.api.serializers import (
-    BoardSerializer,
+    BoardListSerializer,
+    BoardDetailSerializer,
     TaskSerializer,
     TaskCommentSerializer,
 )
@@ -19,22 +20,30 @@ from kanban_app.api.permissions import (
     IsTaskCreatorOrBoardOwner,
 )
 
+# ---------- BOARD-VIEWS ----------
 
 class BoardListCreateView(generics.ListCreateAPIView):
     queryset = Board.objects.all()
-    serializer_class = BoardSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return BoardListSerializer
+        return BoardDetailSerializer
 
     def get_queryset(self):
         user = self.request.user
         return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
-    
+
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
-    serializer_class = BoardSerializer
+    permission_classes = [IsAuthenticated]  # object-level permissions im get_permissions
+
+    def get_serializer_class(self):
+        return BoardDetailSerializer
 
     def get_permissions(self):
         if self.request.method == 'DELETE':
@@ -44,6 +53,8 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
+
+# ---------- TASK-VIEWS bleiben wie bisher ----------
 
 class TaskListCreateView(generics.ListCreateAPIView):
     queryset = Task.objects.all()
@@ -120,5 +131,3 @@ class TaskCommentDestroyView(DestroyAPIView):
     def get_object(self):
         queryset = self.get_queryset()
         return queryset.get(id=self.kwargs["comment_id"])
-
-
