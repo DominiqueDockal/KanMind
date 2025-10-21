@@ -112,10 +112,7 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
         board = task.board
         if self.request.user != board.owner and self.request.user not in board.members.all():
             raise PermissionDenied("You are not a board member.")
-        serializer.save(
-            task=task,
-            author=self.request.user
-        )
+        serializer.save(task=task,author=self.request.user)
 
 class TaskCommentDestroyView(DestroyAPIView):
     serializer_class = TaskCommentSerializer
