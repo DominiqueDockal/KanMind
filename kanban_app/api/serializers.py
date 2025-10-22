@@ -9,6 +9,7 @@ class UserShortSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "email", "fullname"]
 
+
 class BoardListSerializer(serializers.ModelSerializer):
     member_count = serializers.IntegerField(source="members.count", read_only=True)
     ticket_count = serializers.IntegerField(source="tasks.count", read_only=True)
@@ -48,7 +49,6 @@ class BoardUpdateInputSerializer(serializers.ModelSerializer):
             from auth_app.models import User
             existing_ids = set(User.objects.filter(id__in=value).values_list('id', flat=True))
             invalid_ids = set(value) - existing_ids
-            
             if invalid_ids:
                 raise serializers.ValidationError(
                     f"User IDs {invalid_ids} do not exist."
@@ -61,7 +61,6 @@ class BoardUpdateInputSerializer(serializers.ModelSerializer):
             instance.title = validated_data['title']
         if members is not None:
             instance.members.set(members)
-        
         instance.save()
         return instance
 
@@ -80,6 +79,7 @@ class BoardUpdateResponseSerializer(serializers.ModelSerializer):
     def get_members_data(self, obj):
         return UserShortSerializer(obj.members.all(), many=True).data
 
+
 class SimpleTaskSerializer(serializers.ModelSerializer):
     assignee = UserShortSerializer(read_only=True) 
     reviewer = UserShortSerializer(read_only=True) 
@@ -94,7 +94,8 @@ class SimpleTaskSerializer(serializers.ModelSerializer):
     
     def get_comments_count(self, obj):
         return obj.comments.count()
-    
+
+
 class BoardDetailGetSerializer(serializers.ModelSerializer):
     owner_id = serializers.IntegerField(source="owner.id", read_only=True)
     members = UserShortSerializer(many=True, read_only=True)
@@ -103,6 +104,7 @@ class BoardDetailGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Board
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
+
 
 class BoardCreateInputSerializer(serializers.ModelSerializer):
     members = serializers.ListField(
@@ -200,7 +202,8 @@ class TaskSerializer(serializers.ModelSerializer):
                 })
         
         return attrs
-    
+
+
 class TaskUpdateSerializer(serializers.ModelSerializer):
     assignee = UserShortSerializer(read_only=True)
     reviewer = UserShortSerializer(read_only=True)
@@ -263,8 +266,6 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
                 'reviewer': 'Reviewer must be a member or owner of the board.'
             })
         return attrs
-
-
 
 
 class TaskCommentSerializer(serializers.ModelSerializer):

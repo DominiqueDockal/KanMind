@@ -13,13 +13,16 @@ class IsBoardMemberForTaskCreate(BasePermission):
             return False
         return request.user == board.owner or request.user in board.members.all()
     
+
 class IsBoardOwner(BasePermission):
     def has_object_permission(self, request, view, obj):
         return request.user == obj.owner
 
+
 class IsBoardMemberOrOwner(BasePermission):
     def has_object_permission(self, request, view, obj):
         return request.user == obj.owner or request.user in obj.members.all()
+
 
 class IsTaskBoardMemberOrOwner(BasePermission):
     def has_permission(self, request, view):
@@ -41,6 +44,7 @@ class IsTaskBoardMemberOrOwner(BasePermission):
 class IsCommentAuthor(BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.author == request.user
+
 
 class IsTaskCreatorOrBoardOwner(BasePermission):
     def has_object_permission(self, request, view, obj):

@@ -23,6 +23,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         Token.objects.create(user=user)
         return user
 
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()

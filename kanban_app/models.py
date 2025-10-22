@@ -16,6 +16,7 @@ class Board(models.Model):
         verbose_name_plural = "Boards"
         ordering = ["title", "id"]
 
+
 class Task(models.Model):
     STATUS_CHOICES = [
         ("to-do", "To Do"),
@@ -47,6 +48,7 @@ class Task(models.Model):
         verbose_name = "Task"
         verbose_name_plural = "Tasks"
         ordering = ["due_date", "priority"]
+
 
 class TaskComment(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='comments')

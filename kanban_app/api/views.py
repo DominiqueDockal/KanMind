@@ -47,7 +47,6 @@ class BoardListCreateView(generics.ListCreateAPIView):
         return Response(output.data, status=status.HTTP_201_CREATED)
 
 
-
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
     permission_classes = [IsAuthenticated]
@@ -75,6 +74,7 @@ class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
         response_serializer = BoardUpdateResponseSerializer(instance)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
+
 class TaskListCreateView(generics.ListCreateAPIView):
     queryset = Task.objects.all()
     permission_classes = [IsAuthenticated, IsBoardMemberForTaskCreate]
@@ -89,6 +89,7 @@ class TaskListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
@@ -113,7 +114,7 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        self.check_object_permissions(request, instance)  # zwingt Object-Permission-Check
+        self.check_object_permissions(request, instance)
         partial = kwargs.pop('partial', False)
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -128,12 +129,14 @@ class TaskAssignedToMeListView(generics.ListAPIView):
     def get_queryset(self):
         return Task.objects.filter(assignee=self.request.user)
 
+
 class TaskReviewingListView(generics.ListAPIView):
     serializer_class = TaskSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Task.objects.filter(reviewer=self.request.user)
+
 
 class TaskCommentListCreateView(generics.ListCreateAPIView):
     serializer_class = TaskCommentSerializer
@@ -156,7 +159,6 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
             raise NotFound("Task not found.")
         self.check_object_permissions(self.request, task)
         serializer.save(author=self.request.user, task=task)
-
 
 
 class TaskCommentDestroyView(DestroyAPIView):
