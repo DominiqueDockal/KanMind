@@ -43,7 +43,7 @@ class LoginView(APIView):
                     "email": user.email,
                     "user_id": user.id,
                 }, status=status.HTTP_200_OK)
-            return Response({"detail": "Invalid credentials."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmailCheckView(APIView):
@@ -52,7 +52,7 @@ class EmailCheckView(APIView):
     def get(self, request):
         email = request.query_params.get("email")
         if not email:
-            return Response({"detail": "Email parameter is required."}, status=400)
+            return Response({"detail": "Email parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(email=email)
@@ -62,4 +62,4 @@ class EmailCheckView(APIView):
                 "fullname": user.fullname
             })
         except User.DoesNotExist:
-            return Response({"detail": "Email not found."}, status=404)
+            return Response({"detail": "Email not found."}, status=status.HTTP_404_NOT_FOUND)

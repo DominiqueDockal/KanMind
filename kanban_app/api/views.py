@@ -1,17 +1,24 @@
 from django.db.models import Q
 from rest_framework import generics
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import DestroyAPIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.exceptions import NotFound
 
 from kanban_app.models import Board, Task, TaskComment
 from kanban_app.api.serializers import (
+    BoardCreateInputSerializer,
+    BoardDetailGetSerializer,
     BoardListSerializer,
-    BoardDetailSerializer,
+    BoardUpdateInputSerializer,
+    BoardUpdateResponseSerializer,
     TaskSerializer,
     TaskCommentSerializer,
+    TaskUpdateSerializer,
 )
 from kanban_app.api.permissions import (
+    IsBoardMemberForTaskCreate,
     IsBoardOwner,
     IsBoardMemberOrOwner,
     IsTaskBoardMemberOrOwner,
@@ -23,39 +30,55 @@ class BoardListCreateView(generics.ListCreateAPIView):
     queryset = Board.objects.all()
     permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        if self.request.method == "GET":
-            return BoardListSerializer
-        return BoardDetailSerializer
-
     def get_queryset(self):
         user = self.request.user
         return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return BoardCreateInputSerializer 
+        return BoardListSerializer             
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        board = serializer.save()
+        output = BoardListSerializer(board)
+        return Response(output.data, status=status.HTTP_201_CREATED)
 
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+
 
 class BoardDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Board.objects.all()
-    permission_classes = [IsAuthenticated] 
-
-    def get_serializer_class(self):
-        return BoardDetailSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
         if self.request.method == 'DELETE':
             return [IsAuthenticated(), IsBoardOwner()]
         return [IsAuthenticated(), IsBoardMemberOrOwner()]
 
-    def get_queryset(self):
-        user = self.request.user
-        return Board.objects.filter(Q(owner=user) | Q(members=user)).distinct()
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return BoardUpdateInputSerializer
+        return BoardDetailGetSerializer
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object() 
+        serializer = BoardUpdateInputSerializer(
+            instance,
+            data=request.data,
+            partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        response_serializer = BoardUpdateResponseSerializer(instance)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 class TaskListCreateView(generics.ListCreateAPIView):
     queryset = Task.objects.all()
+    permission_classes = [IsAuthenticated, IsBoardMemberForTaskCreate]
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -65,19 +88,21 @@ class TaskListCreateView(generics.ListCreateAPIView):
         return qs
 
     def perform_create(self, serializer):
-        board = serializer.validated_data['board']
-        if self.request.user != board.owner and self.request.user not in board.members.all():
-            raise PermissionDenied("You are not a board member.")
-        serializer.save()
+        serializer.save(creator=self.request.user)
 
 class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Task.objects.all()
-    serializer_class = TaskSerializer
-
+    lookup_field = 'pk'
+    
     def get_permissions(self):
         if self.request.method == 'DELETE':
             return [IsAuthenticated(), IsTaskCreatorOrBoardOwner()]
         return [IsAuthenticated(), IsTaskBoardMemberOrOwner()]
+
+    def get_serializer_class(self):
+        if self.request.method == 'PATCH':
+            return TaskUpdateSerializer
+        return TaskSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -85,6 +110,16 @@ class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
         if board_id:
             qs = qs.filter(board_id=board_id)
         return qs
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.check_object_permissions(request, instance)  # zwingt Object-Permission-Check
+        partial = kwargs.pop('partial', False)
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
 
 class TaskAssignedToMeListView(generics.ListAPIView):
     serializer_class = TaskSerializer
@@ -105,14 +140,24 @@ class TaskCommentListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsTaskBoardMemberOrOwner]
 
     def get_queryset(self):
-        return TaskComment.objects.filter(task_id=self.kwargs["task_id"])
+        task_id = self.kwargs["task_id"]
+        try:
+            task = Task.objects.get(id=task_id)
+        except Task.DoesNotExist:
+            raise NotFound("Task not found.")
+        self.check_object_permissions(self.request, task)
+        return TaskComment.objects.filter(task_id=task_id).order_by("created_at")
 
     def perform_create(self, serializer):
-        task = Task.objects.get(id=self.kwargs["task_id"])
-        board = task.board
-        if self.request.user != board.owner and self.request.user not in board.members.all():
-            raise PermissionDenied("You are not a board member.")
-        serializer.save(task=task,author=self.request.user)
+        task_id = self.kwargs["task_id"]
+        try:
+            task = Task.objects.get(id=task_id)
+        except Task.DoesNotExist:
+            raise NotFound("Task not found.")
+        self.check_object_permissions(self.request, task)
+        serializer.save(author=self.request.user, task=task)
+
+
 
 class TaskCommentDestroyView(DestroyAPIView):
     serializer_class = TaskCommentSerializer
@@ -122,8 +167,13 @@ class TaskCommentDestroyView(DestroyAPIView):
         return TaskComment.objects.filter(task_id=self.kwargs["task_id"])
 
     def get_object(self):
-        queryset = self.get_queryset()
-        obj = queryset.get(id=self.kwargs["comment_id"])
-        self.check_object_permissions(self.request, obj)  
-        return obj
+        task_id = self.kwargs.get("task_id")
+        comment_id = self.kwargs.get("comment_id")
+        
+        try:
+            comment = TaskComment.objects.get(id=comment_id, task__id=task_id)
+            self.check_object_permissions(self.request, comment)
+            return comment
+        except TaskComment.DoesNotExist:
+            raise NotFound(detail="Comment not found or does not belong to this task.")
 
