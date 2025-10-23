@@ -43,10 +43,12 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Run migrations
+### 4. Apply database migrations
 ```bash
 python manage.py migrate
 ```
+
+**Note:** All necessary migrations are included in the repository, so you only need to run `migrate` to set up your database.
 
 ### 5. Create superuser (optional)
 ```bash
@@ -67,11 +69,13 @@ KanMind/
 ├── core/               # Project settings and configuration
 ├── auth_app/           # Authentication and user management
 │   ├── models.py       # Custom User model
+│   ├── migrations/     # Database migrations
 │   ├── api/
 │   │   ├── views.py    # Registration, Login, Email check
 │   │   └── serializers.py
 ├── kanban_app/         # Kanban boards, tasks, and comments
 │   ├── models.py       # Board, Task, TaskComment models
+│   ├── migrations/     # Database migrations
 │   ├── api/
 │   │   ├── views.py    # Board/Task/Comment views
 │   │   ├── serializers.py
@@ -246,6 +250,7 @@ See `requirements.txt` for complete list.
 - Database: SQLite for development (not committed to Git)
 - Authentication: Token-based (DRF Token Authentication)
 - User model: Custom user model with email as username
+- Migrations: Included in the repository for easy setup
 
 
 ## Security Notes
@@ -255,6 +260,3 @@ See `requirements.txt` for complete list.
 - ⚠️ Set `DEBUG=False` in production
 - ⚠️ Configure proper `ALLOWED_HOSTS` in production
 - ⚠️ Use HTTPS in production
-
-
-
