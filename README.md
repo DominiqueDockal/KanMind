@@ -246,7 +246,7 @@ See `requirements.txt` for complete list.
 - Database: SQLite for development (not committed to Git)
 - Authentication: Token-based (DRF Token Authentication)
 - User model: Custom user model with email as username
-- API Documentation: Available in `/docs` (if added)
+
 
 ## Security Notes
 
@@ -256,17 +256,5 @@ See `requirements.txt` for complete list.
 - ⚠️ Configure proper `ALLOWED_HOSTS` in production
 - ⚠️ Use HTTPS in production
 
-## Testing
 
-Run tests:
-```bash
-python manage.py test
-```
 
-## License
-
-[Your License Here]
-
-## Contact
-
-[Your Contact Info]
