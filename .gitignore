@@ -1,7 +1,6 @@
-# SQLite-Datenbank
+
 db.sqlite3
-# Virtuelle Umgebung
 env/
-# Python-Cache und Bytecode
 __pycache__/
 *.pyc
+**/migrations/
