@@ -23,7 +23,7 @@ Backend API for the KanMind Kanban board application built with Django and Djang
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/kanmind-backend.git
+git clone https://github.com/DominiqueDockal/KanMind.git
 cd kanmind-backend
 ```
 
@@ -131,69 +131,6 @@ This API uses token-based authentication. Include the token in the Authorization
 Authorization: Token your_token_here
 ```
 
-### Example: Register and Login
-
-**Register:**
-```bash
-curl -X POST http://127.0.0.1:8000/api/registration/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fullname": "John Doe",
-    "email": "john@example.com",
-    "password": "securepass123",
-    "repeated_password": "securepass123"
-  }'
-```
-
-**Response:**
-```json
-{
-  "token": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b",
-  "fullname": "John Doe",
-  "email": "john@example.com",
-  "user_id": 1
-}
-```
-
-**Login:**
-```bash
-curl -X POST http://127.0.0.1:8000/api/login/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "securepass123"
-  }'
-```
-
-## Usage Examples
-
-### Create a Board
-```bash
-curl -X POST http://127.0.0.1:8000/api/boards/ \
-  -H "Authorization: Token your_token_here" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "My Project",
-    "members": [2, 3]
-  }'
-```
-
-### Create a Task
-```bash
-curl -X POST http://127.0.0.1:8000/api/tasks/ \
-  -H "Authorization: Token your_token_here" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "board": 1,
-    "title": "Implement login feature",
-    "description": "Add user authentication",
-    "status": "to-do",
-    "priority": "high",
-    "assignee_id": 2,
-    "due_date": "2025-10-30"
-  }'
-```
-
 ## Permissions
 
 - **Board Owner**: Can delete board, update settings, manage all tasks
@@ -222,17 +159,6 @@ CORS is configured using `django-cors-headers`. For production, update `CORS_ALL
 CORS_ALLOWED_ORIGINS = [
     "https://your-frontend-domain.com",
 ]
-```
-
-## Environment Variables (Production)
-
-Create a `.env` file:
-
-```env
-SECRET_KEY=your_secret_key_here
-DEBUG=False
-ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
-DATABASE_URL=postgresql://user:password@localhost/dbname
 ```
 
 ## Dependencies
