@@ -249,7 +249,6 @@ class TaskSerializer(serializers.ModelSerializer):
         if reviewer:
             if reviewer not in board.members.all() and reviewer != board.owner:
                 raise serializers.ValidationError({'reviewer': 'Reviewer must be a board member or owner'})
-        
         return attrs
 
 class TaskUpdateSerializer(serializers.ModelSerializer):
