@@ -24,7 +24,7 @@ Backend API for the KanMind Kanban board application built with Django and Djang
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/DominiqueDockal/KanMind.git
-cd kanmind-backend
+cd KanMind
 ```
 
 ### 2. Create and activate virtual environment
