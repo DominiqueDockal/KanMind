@@ -1,4 +1,5 @@
 from rest_framework.permissions import BasePermission
+from rest_framework.exceptions import NotFound
 from kanban_app.models import Task, Board
 
 class IsBoardMemberForTaskCreate(BasePermission):
@@ -6,6 +7,7 @@ class IsBoardMemberForTaskCreate(BasePermission):
     Permission: IsBoardMemberForTaskCreate
 
     Allows task creation only if the requesting user is the owner or a member of the specified board.
+    Raises 404 if the board does not exist, 403 if the user is not a member.
 
     Used for:
         POST /api/tasks/
@@ -23,6 +25,9 @@ class IsBoardMemberForTaskCreate(BasePermission):
 
         Returns:
             bool: True if user is a member or owner, else False.
+            
+        Raises:
+            NotFound: If the specified board does not exist (404).
         """
         board_id = request.data.get('board')
         if not board_id:
@@ -30,10 +35,10 @@ class IsBoardMemberForTaskCreate(BasePermission):
         try:
             board = Board.objects.get(pk=board_id)
         except Board.DoesNotExist:
-            return False
+            raise NotFound(detail="Board not found.")  #hier war 403
         return request.user == board.owner or request.user in board.members.all()
-    
 
+    
 class IsBoardOwner(BasePermission):
     """
     Permission: IsBoardOwner
@@ -91,6 +96,7 @@ class IsTaskBoardMemberOrOwner(BasePermission):
     Permission: IsTaskBoardMemberOrOwner
 
     Allows access to tasks only if user is a member or owner of the associated board.
+    Raises 404 if the task does not exist.
 
     Used for:
         PATCH /api/tasks/{task_id}/
@@ -112,14 +118,17 @@ class IsTaskBoardMemberOrOwner(BasePermission):
 
         Returns:
             bool: True if allowed.
+            
+        Raises:
+            NotFound: If the specified task does not exist (404).
         """
-        task_id = view.kwargs.get("pk")  
+        task_id = view.kwargs.get('pk')
         if not task_id:
             return True
         try:
             task = Task.objects.get(pk=task_id)
         except Task.DoesNotExist:
-            return False
+            raise NotFound(detail="Task not found.")
         board = task.board
         return request.user == board.owner or request.user in board.members.all()
 
